@@ -1,5 +1,5 @@
 /* ----------------------------------------------------------------------------
- * odata-v4.0-abnf for URI conventions transformed into ANTLRv4 syntax from 
+ * odata-v4.0-abnf for URI conventions transformed into ANTLRv4 syntax from
  * https://tools.oasis-open.org/version-control/svn/odata/ in there
  * /trunk/spec/ABNF/odata-abnf-construction-rules-v4.0-wd01.txt rev 191
  * last modified 2013-02-15 15:41:18 +0000 (from svn info)
@@ -41,11 +41,11 @@
  *   + Only info of potential interest for app as parser rule (another target)
  * - This is an untested hack (currently)
  * - All errors belong to 'me' ;-)
- * Please cf. lexer grammar for character level info (possibly irrelevant 
+ * Please cf. lexer grammar for character level info (possibly irrelevant
  * for applications instrumenting this grammar to parse a request).
  * These notes will be replaced when the code will be released.
  *
- * Contact: Stefan Drees <stefan@drees.name> 
+ * Contact: Stefan Drees <stefan@drees.name>
  */
 grammar ODataParser;
 import ODataLexer;
@@ -64,20 +64,20 @@ odataRelativeUri : resourcePath ( QUESTION queryOptions )?;
  * 1. Resource Path
  * ----------------------------------------------------------------------------
  */
-resourcePath : ( containerQualifier )? entitySetName ( collectionNavigation )? 
+resourcePath : ( containerQualifier )? entitySetName ( collectionNavigation )?
              | ( containerQualifier )? namedEntity   ( singleNavigation )?
-             | actionImportCall 
-             | entityColFunctionImportCall    ( collectionNavigation )? 
-             | entityFunctionImportCall       ( singleNavigation )? 
-             | complexColFunctionImportCall   ( collectionPath )? 
-             | complexFunctionImportCall      ( complexPath )? 
-             | primitiveColFunctionImportCall ( collectionPath )? 
+             | actionImportCall
+             | entityColFunctionImportCall    ( collectionNavigation )?
+             | entityFunctionImportCall       ( singleNavigation )?
+             | complexColFunctionImportCall   ( collectionPath )?
+             | complexFunctionImportCall      ( complexPath )?
+             | primitiveColFunctionImportCall ( collectionPath )?
              | primitiveFunctionImportCall    ( singlePath )? ;
 
 collectionNavigation : ( SLASH qualifiedEntityTypeName )?
                        ( keyPredicate ( singleNavigation )?
                        | collectionPath
-                       | EmptyString     // for restricting to a derived entity type
+                       | /* epsilon */
                        );
 
 keyPredicate     : simpleKey | compoundKey;
@@ -86,27 +86,27 @@ compoundKey      : OP keyValuePair ( COMMA keyValuePair )* CP;
 keyValuePair     : primitiveKeyProperty EQ keyPropertyValue;
 keyPropertyValue : primitiveLiteral; // restricted to characters that are valid in a URI path segment
 
-singleNavigation : ( SLASH qualifiedEntityTypeName )? 
-                   ( links SLASH navigationProperty 
+singleNavigation : ( SLASH qualifiedEntityTypeName )?
+                   ( links SLASH navigationProperty
                    | SLASH ( entityColNavigationProperty ( collectionNavigation )?
                          | entityNavigationProperty    ( singleNavigation )?
                          | complexColProperty          ( collectionPath )?
                          | complexProperty             ( complexPath )?
                          | primitiveColProperty        ( collectionPath )?
                          | primitiveProperty           ( singlePath )?
-                         | streamProperty 
+                         | streamProperty
                          )
-                   | boundOperation 
-                   | ''     // for casting after key access
+                   | boundOperation
+                   | /* epsilon */      // for casting after key access
                    );
 
 collectionPath : count | boundOperation;
 singlePath     : value | boundOperation;
 
-complexPath    : ( SLASH qualifiedComplexTypeName )? 
+complexPath    : ( SLASH qualifiedComplexTypeName )?
                  ( SLASH ( complexProperty   ( complexPath )?
                        | primitiveProperty ( singlePath )?
-                       ) 
+                       )
                  | boundOperation
                  );
 
@@ -114,15 +114,15 @@ count : ODataSignal_COUNT;
 links : ODataSignal_LINKS;
 value : ODataSignal_VALUE;
 
-// boundOperation segments can only be composed if the type of the previous segment 
+// boundOperation segments can only be composed if the type of the previous segment
 // matches the type of the first parameter of the action or function being called.
 boundOperation : SLASH ( boundActionCall
-                     | boundEntityColFuncCall    ( collectionNavigation )? 
-                     | boundEntityFuncCall       ( singleNavigation )? 
+                     | boundEntityColFuncCall    ( collectionNavigation )?
+                     | boundEntityFuncCall       ( singleNavigation )?
                      | boundComplexColFuncCall   ( collectionPath )?
                      | boundComplexFuncCall      ( complexPath )?
                      | boundPrimitiveColFuncCall ( collectionPath )?
-                     | boundPrimitiveFuncCall    ( singlePath )? 
+                     | boundPrimitiveFuncCall    ( singlePath )?
                      );
 
 // COMMENT_ANTLR: DQ not SQ around empty parenthesis pairs and dot. Why?
@@ -132,8 +132,8 @@ boundActionCall  : namespace DOT action ( OP CP )? ;
                   // and is specified by reference using the URI immediately preceding (to the left) of the boundActionCall
 
 // The following boundXxxFuncCall rules have the added restrictions that
-//  - the function MUST support binding, and 
-//  - the binding parameter type MUST match the type of resource identified by the 
+//  - the function MUST support binding, and
+//  - the binding parameter type MUST match the type of resource identified by the
 //    URI immediately preceding (to the left) of the boundXxxFuncCall, and
 //  - the functionParameters MUST NOT include the bindingParameter.
 boundEntityFuncCall       : namespace DOT entityFunction       functionParameters ;
@@ -162,27 +162,27 @@ containerQualifier : namespace DOT entityContainer DOT ;
  * ----------------------------------------------------------------------------
  */
 
-queryOptions : queryOption ( AMPERSAND queryOption )*;        
-queryOption  : systemQueryOption  
-             | aliasAndValue 
+queryOptions : queryOption ( AMPERSAND queryOption )*;
+queryOption  : systemQueryOption
+             | aliasAndValue
              | parameterNameAndValue
-             | customQueryOption;  
+             | customQueryOption;
 
 systemQueryOption : aggregate
-                  | expand 
-                  | filter 
-                  | format 
-                  | orderby 
-                  | skip 
-                  | top 
-                  | inlinecount 
-                  | select 
+                  | expand
+                  | filter
+                  | format
+                  | orderby
+                  | skip
+                  | top
+                  | inlinecount
+                  | select
                   | skiptoken;
 
 aggregate         : ODataSignal_AGGREGATE EQ aggregateCommand ( SEMI aggregateCommand )*;
-aggregateCommand  : aggregateClause 
-                  | filter 
-                  | expand; 
+aggregateCommand  : aggregateClause
+                  | filter
+                  | expand;
 aggregateClause   : aggregateList ( XWS ODataSignal_GROUPBY XWS groupbyList )?
                   | ODataSignal_GROUPBY XWS groupbyList;
 // COMMENT_ANTLR4: $groupby had DQS and SQS. Why?
@@ -193,27 +193,27 @@ aggregateItem     : property ( XWS As_LLC XWS dynamicProperty )?
                   | 'countDistinct' OP ( property | navigationProperty ) CP XWS As_LLC XWS dynamicProperty
                   | ( navigationProperty SLASH )* OP aggregateList CP
                   | ( navigationProperty SLASH )* property
-                  | ( navigationProperty SLASH )* aggregateFunction OP property CP; 
+                  | ( navigationProperty SLASH )* aggregateFunction OP property CP;
 // COMMENT_ANTLR4: first literal as was in DQ all others in SQS. Why?
 groupbyList       : groupbyItem ( COMMA groupbyItem )* ;
 groupbyItem       : property
                   | navigationProperty SLASH OP groupbyList CP
-                  | navigationProperty SLASH groupbyItem ; 
+                  | navigationProperty SLASH groupbyItem ;
 dynamicProperty   : odataIdentifier ;
 aggregateFunction : Sum_LLC | Min_LLC | Max_LLC | Average_LLC ;
 
 expand       : ODataSignal_EXPAND EQ expandItem ( COMMA expandItem )* ;
-expandItem   : ( qualifiedEntityTypeName SLASH )? navigationProperty 
+expandItem   : ( qualifiedEntityTypeName SLASH )? navigationProperty
                ( OP expandOption ( SEMI expandOption )* CP )?;
 expandOption : filter
-             | select 
+             | select
              | orderby
-             | skip 
-             | top 
+             | skip
+             | top
              | inlinecount
              | expand
              | levels;
-             
+
 levels : ODataSignal_LEVELS EQ ( ( Digit )+ | Max_LLC );
 
 filter : ODataSignal_FILTER EQ boolCommonExpr;
@@ -226,25 +226,25 @@ top  : ODataSignal_TOP  EQ ( Digit )+;
 
 format : ODataSignal_FORMAT EQ
          ( Atom_LLC
-         | Json_LLC 
+         | Json_LLC
          | Xml_LLC
          | ( pChar | SLASH )+ // <a data service specific value indicating a
          ) ;                  // format specific to the specific data service> or
                               // <An IANA-defined [IANA-MMT] content type>
-                          
+
 inlinecount : ODataSignal_INLINECOUNT EQ ( AllPages_LLC | None_LLC ) ;
 
 select     : ODataSignal_SELECT EQ selectItem ( COMMA selectItem )* ;
-selectItem : STAR  
+selectItem : STAR
            | '$ref'
-           | allOperationsInSchema 
-           | ( qualifiedEntityTypeName SLASH )? 
-             ( navigationProperty  
+           | allOperationsInSchema
+           | ( qualifiedEntityTypeName SLASH )?
+             ( navigationProperty
              | ( ( complexProperty | complexColProperty ) SLASH
-                  ( qualifiedComplexTypeName SLASH )? 
-                )* property 
-             | qualifiedActionName  
-             | qualifiedFunctionName  
+                  ( qualifiedComplexTypeName SLASH )?
+                )* property
+             | qualifiedActionName
+             | qualifiedFunctionName
              ) ;
 
 allOperationsInSchema : namespace DOT STAR ;
@@ -254,28 +254,28 @@ allOperationsInSchema : namespace DOT STAR ;
 qualifiedActionName   : namespace '.' action ( OP parameterTypeNames CP )? ;
 qualifiedFunctionName : namespace '.' function ( OP parameterTypeNames CP )? ;
 
-// The types of all the parameters to the corresponding function 
+// The types of all the parameters to the corresponding function
 // in the order they are declared in the function.
 parameterTypeNames : ( parameterTypeName ( COMMA parameterTypeName )* )? ;
-parameterTypeName  : qualifiedTypeName ; 
+parameterTypeName  : qualifiedTypeName ;
 
-skiptoken : ODataSignal_SKIPTOKEN EQ 
+skiptoken : ODataSignal_SKIPTOKEN EQ
             ( Unreserved | PctEncoded | OtherDelims |  SQ | COLON | AT_SIGN | DOLLAR | EQ )+; // everything except "&" and ";"
 
 aliasAndValue         : parameterAlias        EQ parameterValue;
 parameterNameAndValue : functionParameterName EQ parameterValue;
 
-parameterValue : complexInUri  
+parameterValue : complexInUri
                | complexColInUri
                | entityReference
                | entityRefColInUri
                | primitiveLiteral
                | primitiveColInUri;
-               
-entityReference : 'KEY' OP 
+
+entityReference : 'KEY' OP
                   ( entityContainer DOT )? entitySetName keyPredicate
                   ( SLASH qualifiedEntityTypeName )?
-                  CP;                
+                  CP;
 
 customQueryOption : customName ( EQ customValue )?;
 customName        :  ( Unreserved | PctEncoded | OtherDelims |  SQ | COLON )                   // MUST NOT start with "$" or "@"
@@ -291,47 +291,47 @@ commonExpr : ( primitiveLiteral
              | parameterAlias
              | firstMemberExpr
              | functionExpr
-             | negateExpr 
-             | methodCallExpr 
-             | parenExpr 
-             | castExpr 
-             ) 
-             ( addExpr 
-             | subExpr 
-             | mulExpr 
-             | divExpr 
+             | negateExpr
+             | methodCallExpr
+             | parenExpr
+             | castExpr
+             )
+             ( addExpr
+             | subExpr
+             | mulExpr
+             | divExpr
              | modExpr
-             )?;  
+             )?;
 
-boolCommonExpr : ( isofExpr 
-                 | boolMethodCallExpr 
-                 | notExpr  
+boolCommonExpr : ( isofExpr
+                 | boolMethodCallExpr
+                 | notExpr
                  | commonExpr
-                   ( eqExpr 
-                   | neExpr 
-                   | ltExpr  
-                   | leExpr  
-                   | gtExpr 
-                   | geExpr 
-                   | hasExpr 
+                   ( eqExpr
+                   | neExpr
+                   | ltExpr
+                   | leExpr
+                   | gtExpr
+                   | geExpr
+                   | hasExpr
                    )?
                  | boolParenExpr
-                 ) ( andExpr | orExpr )?; 
+                 ) ( andExpr | orExpr )?;
 
 firstMemberExpr : ( lambdaPredicatePrefixExpr )?  // only allowed inside a lambdaPredicateExpr
                   memberExpr;
 
 memberExpr : ( qualifiedEntityTypeName SLASH )?
-             ( entityColNavigationProperty ( collectionNavigationExpr )? 
-             | entityNavigationProperty    ( singleNavigationExpr )? 
+             ( entityColNavigationProperty ( collectionNavigationExpr )?
+             | entityNavigationProperty    ( singleNavigationExpr )?
              | complexColProperty          ( collectionPathExpr )?
-             | complexProperty             ( complexPathExpr )? 
+             | complexProperty             ( complexPathExpr )?
              | primitiveColProperty        ( collectionPathExpr )?
              | primitiveProperty           ( singlePathExpr )?
-             | streamProperty 
-             | boundFunctionExpr 
+             | streamProperty
+             | boundFunctionExpr
              );
-                   
+
 lambdaPredicatePrefixExpr : inscopeVariableExpr SLASH;
 inscopeVariableExpr       : implicitVariableExpr | lambdaVariableExpr;
 implicitVariableExpr      : DOLLAR 'it' ; // references the unnamed outer variable of the query
@@ -339,19 +339,19 @@ implicitVariableExpr      : DOLLAR 'it' ; // references the unnamed outer variab
 lambdaVariableExpr        : odataIdentifier;
 
 collectionNavigationExpr : count
-                         | SLASH ( qualifiedEntityTypeName SLASH )? 
-                           ( boundFunctionExpr 
+                         | SLASH ( qualifiedEntityTypeName SLASH )?
+                           ( boundFunctionExpr
                            | anyExpr
-                           | allExpr 
+                           | allExpr
                            );
 
 singleNavigationExpr : SLASH memberExpr;
 
-collectionPathExpr : count 
+collectionPathExpr : count
                    | SLASH boundFunctionExpr
                    | SLASH anyExpr
                    | SLASH allExpr;
- 
+
 complexPathExpr : SLASH ( qualifiedComplexTypeName SLASH )?
                   ( primitiveProperty ( singlePathExpr )?
                   | complexProperty   ( complexPathExpr )?
@@ -360,17 +360,17 @@ complexPathExpr : SLASH ( qualifiedComplexTypeName SLASH )?
 
 singlePathExpr : SLASH boundFunctionExpr ;
 
-boundFunctionExpr : functionExpr ; // boundFunction segments can only be composed if the type of the    
+boundFunctionExpr : functionExpr ; // boundFunction segments can only be composed if the type of the
                                    // previous segment matches the type of the first function parameter
-                                     
-functionExpr : namespace DOT  
-               ( entityColFunction    functionExprParameters ( collectionNavigationExpr )? 
-               | entityFunction       functionExprParameters ( singleNavigationExpr )? 
+
+functionExpr : namespace DOT
+               ( entityColFunction    functionExprParameters ( collectionNavigationExpr )?
+               | entityFunction       functionExprParameters ( singleNavigationExpr )?
                | complexColFunction   functionExprParameters ( collectionPathExpr )?
                | complexFunction      functionExprParameters ( complexPathExpr )?
-               | primitiveColFunction functionExprParameters ( collectionPathExpr )? 
-               | primitiveFunction    functionExprParameters ( singlePathExpr )? 
-               ) 
+               | primitiveColFunction functionExprParameters ( collectionPathExpr )?
+               | primitiveFunction    functionExprParameters ( singlePathExpr )?
+               )
              ;
 
 functionExprParameters : OP ( functionExprParameter ( COMMA functionExprParameter )* )? CP ;
@@ -380,39 +380,39 @@ anyExpr : Any_LLC OP ( XWS )* ( lambdaVariableExpr  ( XWS )* COLON  ( XWS )* lam
 allExpr : All_LLC OP  ( XWS )*   lambdaVariableExpr  ( XWS )* COLON  ( XWS )* lambdaPredicateExpr    ( XWS )* CP ;
 lambdaPredicateExpr : boolCommonExpr ; // containing at least one lambdaPredicatePrefixExpr
 
-methodCallExpr : indexOfMethodCallExpr 
-               | toLowerMethodCallExpr 
-               | toUpperMethodCallExpr  
-               | trimMethodCallExpr 
-               | substringMethodCallExpr 
-               | concatMethodCallExpr 
-               | lengthMethodCallExpr 
-               | yearMethodCallExpr 
-               | monthMethodCallExpr 
-               | dayMethodCallExpr 
-               | daysMethodCallExpr 
-               | hourMethodCallExpr 
-               | hoursMethodCallExpr 
-               | minuteMethodCallExpr 
-               | minutesMethodCallExpr 
-               | secondMethodCallExpr 
+methodCallExpr : indexOfMethodCallExpr
+               | toLowerMethodCallExpr
+               | toUpperMethodCallExpr
+               | trimMethodCallExpr
+               | substringMethodCallExpr
+               | concatMethodCallExpr
+               | lengthMethodCallExpr
+               | yearMethodCallExpr
+               | monthMethodCallExpr
+               | dayMethodCallExpr
+               | daysMethodCallExpr
+               | hourMethodCallExpr
+               | hoursMethodCallExpr
+               | minuteMethodCallExpr
+               | minutesMethodCallExpr
+               | secondMethodCallExpr
                | secondsMethodCallExpr
                | timeMethodCallExpr
-               | dateMethodCallExpr 
-               | roundMethodCallExpr 
-               | floorMethodCallExpr 
-               | ceilingMethodCallExpr 
-               | distanceMethodCallExpr 
-               | geoLengthMethodCallExpr 
+               | dateMethodCallExpr
+               | roundMethodCallExpr
+               | floorMethodCallExpr
+               | ceilingMethodCallExpr
+               | distanceMethodCallExpr
+               | geoLengthMethodCallExpr
                | getTotalOffsetMinutesExpr
                | minDateTimeExpr
                | maxDateTimeExpr
                | nowDateTimeExpr;
 
-boolMethodCallExpr : endsWithMethodCallExpr 
-                   | startsWithMethodCallExpr 
-                   | substringOfMethodCallExpr                                          
-                   | intersectsMethodCallExpr; 
+boolMethodCallExpr : endsWithMethodCallExpr
+                   | startsWithMethodCallExpr
+                   | substringOfMethodCallExpr
+                   | intersectsMethodCallExpr;
 
 substringOfMethodCallExpr : SubStringOf_LLC OP  ( XWS )* commonExpr  ( XWS )* COMMA  ( XWS )* commonExpr  ( XWS )* CP;
 startsWithMethodCallExpr  : StartsWith_LLC  OP  ( XWS )* commonExpr  ( XWS )* COMMA  ( XWS )* commonExpr  ( XWS )* CP;
@@ -442,7 +442,7 @@ roundMethodCallExpr       : Round_LLC       OP  ( XWS )* commonExpr  ( XWS )* CP
 floorMethodCallExpr       : Floor_LLC       OP  ( XWS )* commonExpr  ( XWS )* CP ;
 ceilingMethodCallExpr     : Ceiling_LLC     OP  ( XWS )* commonExpr  ( XWS )* CP ;
 
-getTotalOffsetMinutesExpr : GetTotalOffsetMinutes_LLC OP  ( XWS )* commonExpr  ( XWS )* CP ; 
+getTotalOffsetMinutesExpr : GetTotalOffsetMinutes_LLC OP  ( XWS )* commonExpr  ( XWS )* CP ;
 
 distanceMethodCallExpr    : GeoDotDistance_LLC   OP  ( XWS )* commonExpr  ( XWS )* COMMA  ( XWS )* commonExpr  ( XWS )* CP;
 geoLengthMethodCallExpr   : GeoLength_LLC     OP  ( XWS )* commonExpr  ( XWS )* CP;
@@ -458,7 +458,7 @@ parenExpr     : OP  ( XWS )* commonExpr      ( XWS )* CP ;
 andExpr : XWS And_LLC XWS boolCommonExpr ;
 orExpr  : XWS Or_LLC  XWS boolCommonExpr ;
 
-eqExpr : XWS Eq_LLC XWS commonExpr ;     
+eqExpr : XWS Eq_LLC XWS commonExpr ;
 neExpr : XWS Ne_LLC XWS commonExpr ;
 ltExpr : XWS Lt_LLC XWS commonExpr ;
 leExpr : XWS Le_LLC XWS commonExpr ;
@@ -486,51 +486,51 @@ castExpr : Cast_LLC OP  ( XWS )* ( commonExpr  ( XWS )* COMMA  ( XWS )* )? quali
  *       applying these rules, see comment at the top of this file
  */
 
-complexColInUri : BeginArray 
-                  ( complexInUri ( ValueSeparator complexInUri )* )? 
+complexColInUri : BeginArray
+                  ( complexInUri ( ValueSeparator complexInUri )* )?
                   EndArray
                 ;
-                  
+
 complexInUri : BeginObject
-               ( ( complexTypeMetadataInUri  
-                 | primitivePropertyInUri 
-                 | complexPropertyInUri 
-                 | collectionPropertyInUri  
+               ( ( complexTypeMetadataInUri
+                 | primitivePropertyInUri
+                 | complexPropertyInUri
+                 | collectionPropertyInUri
                  )
-                 ( ValueSeparator 
-                    ( primitivePropertyInUri 
-                    | complexPropertyInUri 
-                    | collectionPropertyInUri  
-                    ) 
+                 ( ValueSeparator
+                    ( primitivePropertyInUri
+                    | complexPropertyInUri
+                    | collectionPropertyInUri
+                    )
                   )*
-               )?  
+               )?
                EndObject;
 
-collectionPropertyInUri : ( QuotationMark primitiveColProperty QuotationMark 
-                            NameSeparator 
-                            primitiveColInUri 
-                          ) 
-                        | ( QuotationMark complexColProperty QuotationMark 
-                            NameSeparator 
+collectionPropertyInUri : ( QuotationMark primitiveColProperty QuotationMark
+                            NameSeparator
+                            primitiveColInUri
+                          )
+                        | ( QuotationMark complexColProperty QuotationMark
+                            NameSeparator
                             complexColInUri
                           );
 
-primitiveColInUri : BeginArray 
-                    ( primitiveLiteralInJSON ( ValueSeparator primitiveLiteralInJSON )* )? 
+primitiveColInUri : BeginArray
+                    ( primitiveLiteralInJSON ( ValueSeparator primitiveLiteralInJSON )* )?
                     EndArray;
-                    
-complexPropertyInUri : QuotationMark complexProperty QuotationMark 
-                       NameSeparator 
+
+complexPropertyInUri : QuotationMark complexProperty QuotationMark
+                       NameSeparator
                        complexInUri;
-                            
+
 complexTypeMetadataInUri : typeNVPInUri;
 
 typeNVPInUri : QuotationMark 'odata' DOT 'type' QuotationMark
                NameSeparator
                QuotationMark qualifiedTypeName QuotationMark;
 
-primitivePropertyInUri : QuotationMark primitiveProperty QuotationMark 
-                         NameSeparator 
+primitivePropertyInUri : QuotationMark primitiveProperty QuotationMark
+                         NameSeparator
                          primitiveLiteralInJSON;
 
 // COMMENT_ANTLR: Rule below noted as missing in rule actionParameterValue. Why?
@@ -539,13 +539,13 @@ entityRefColInUri : BeginArray
                     EndArray;
 
 
-entityRefInJSON   : DQ entityReference DQ;                                       
-                                        
-// JSON syntax: adapted to URI restrictions from [RFC4627]                 
+entityRefInJSON   : DQ entityReference DQ;
+
+// JSON syntax: adapted to URI restrictions from [RFC4627]
 BeginObject :  ( XWS )* OC  ( XWS )*;
 EndObject   :  ( XWS )* CC  ( XWS )*;
 
-BeginArray :  ( XWS )* OB  ( XWS )*; 
+BeginArray :  ( XWS )* OB  ( XWS )*;
 EndArray   :  ( XWS )* CB  ( XWS )*;
 
 QuotationMark  : DQ;
@@ -554,17 +554,17 @@ ValueSeparator :  ( XWS )* COMMA  ( XWS )*;
 
 primitiveLiteralInJSON : stringInJSON
                        | numberInJSON
-                       | True_LLC 
+                       | True_LLC
                        | False_LLC
                        | Null_LLC;
 
 stringInJSON : QuotationMark charInJSON* QuotationMark;
 charInJSON   : pChar | SLASH | QUESTION    // only these are allowed in the query part of a URL
              | UnencodedNoSpecial // these are allowed per processing rule
-             | ESCAPE ( DQ 
+             | ESCAPE ( DQ
                       | ESCAPE
                       | SLASH         // solidus         U+002F
-                      | B_LLC         // backspace       U+0008                
+                      | B_LLC         // backspace       U+0008
                       | F_LLC         // form feed       U+000C
                       | N_LLC         // line feed       U+000A
                       | R_LLC         // carriage return U+000D
@@ -581,13 +581,13 @@ expPart          : E ( SIGN )? ( Digit )+;
 // TODO: move this to separate ABNF and cite original JSON syntax [RFC4627]?
 //  - pro: request body is less restrictive than URI, so xxxInUri rules are too restrictive
 //  - con: would require duplicating xxxInUri rules to just add  ( VWS )*
-//  - pro: will require duplicating these rules for JSON format anyway, roll action in there  
-actionRequestBody    :  ( VWS )* BeginObject  ( VWS )* 
-                       actionParameter ( ValueSeparator  ( VWS )* actionParameter )* 
-                        ( VWS )* EndObject  ( VWS )*; 
-actionParameter      : actionParameterName NameSeparator actionParameterValue; 
-actionParameterName  : QuotationMark odataIdentifier QuotationMark; 
-actionParameterValue : complexInUri  
+//  - pro: will require duplicating these rules for JSON format anyway, roll action in there
+actionRequestBody    :  ( VWS )* BeginObject  ( VWS )*
+                       actionParameter ( ValueSeparator  ( VWS )* actionParameter )*
+                        ( VWS )* EndObject  ( VWS )*;
+actionParameter      : actionParameterName NameSeparator actionParameterValue;
+actionParameterName  : QuotationMark odataIdentifier QuotationMark;
+actionParameterValue : complexInUri
                      | complexColInUri
                      | entityRefInJSON
                      | entityRefColInUri
@@ -599,15 +599,15 @@ actionParameterValue : complexInUri
  * ----------------------------------------------------------------------------
  */
 
-qualifiedTypeName : qualifiedEntityTypeName 
+qualifiedTypeName : qualifiedEntityTypeName
                   | qualifiedComplexTypeName
                   | qualifiedEnumerationTypeName
-                  | PrimitiveTypeName 
-                  | 'Collection' OP 
-                    ( qualifiedEntityTypeName 
+                  | PrimitiveTypeName
+                  | 'Collection' OP
+                    ( qualifiedEntityTypeName
                     | qualifiedComplexTypeName
-                    | qualifiedEnumerationTypeName 
-                    | PrimitiveTypeName 
+                    | qualifiedEnumerationTypeName
+                    | PrimitiveTypeName
                     ) CP;
 
 qualifiedEntityTypeName      : namespace DOT entityTypeName;
@@ -619,9 +619,9 @@ namespace     : namespacePart ( DOT namespacePart )*;
 namespacePart : odataIdentifier;
 
 entitySetName       : odataIdentifier;
-namedEntity         : odataIdentifier;         
+namedEntity         : odataIdentifier;
 entityTypeName      : odataIdentifier;
-complexTypeName     : odataIdentifier; 
+complexTypeName     : odataIdentifier;
 enumerationTypeName : odataIdentifier;
 enumerationMember   : odataIdentifier;
 
@@ -632,12 +632,12 @@ identifierCharacter         : Alpha | ( Digit ) | UNDERSCORE;    // TODO: Any ch
 PrimitiveTypeName : ('Edm' DOT)? ( 'Binary'
                              | 'Boolean'
                              | 'Byte'
-                             | 'Date' 
+                             | 'Date'
                              | 'DateTimeOffset'
                              | 'Decimal'
                              | 'Double'
-                             | 'Duration' 
-                             | 'Guid' 
+                             | 'Duration'
+                             | 'Guid'
                              | 'Int16'
                              | 'Int32'
                              | 'Int64'
@@ -646,7 +646,7 @@ PrimitiveTypeName : ('Edm' DOT)? ( 'Binary'
                              | 'Stream'
                              | 'String'
                              | 'TimeOfDay'
-                             | AbstractSpatialTypeName ( ConcreteSpatialTypeName )? 
+                             | AbstractSpatialTypeName ( ConcreteSpatialTypeName )?
                              );
 AbstractSpatialTypeName : 'Geography'
                         | 'Geometry';
@@ -658,10 +658,10 @@ ConcreteSpatialTypeName : 'Collection'
                         | 'Point'
                         | 'Polygon';
 
-property : primitiveProperty  
-         | primitiveColProperty 
-         | complexProperty 
-         | complexColProperty 
+property : primitiveProperty
+         | primitiveColProperty
+         | complexProperty
+         | complexColProperty
          | streamProperty;
 
 primitiveProperty       : primitiveKeyProperty | primitiveNonKeyProperty;
@@ -681,14 +681,14 @@ entityContainer : odataIdentifier;
 action : odataIdentifier ;
 actionImport : odataIdentifier ;
 
-function : entityFunction 
-         | entityColFunction 
-         | complexFunction 
-         | complexColFunction 
-         | primitiveFunction 
+function : entityFunction
+         | entityColFunction
+         | complexFunction
+         | complexColFunction
+         | primitiveFunction
          | primitiveColFunction
          ;
-         
+
 entityFunction       : odataIdentifier ;
 entityColFunction    : odataIdentifier ;
 complexFunction      : odataIdentifier ;
@@ -708,43 +708,43 @@ primitiveColFunctionImport : odataIdentifier ;
  * ----------------------------------------------------------------------------
  */
 
-primitiveLiteral : null_symbol 
-                 | decimal 
-                 | single 
-                 | double_symbol 
-                 | sbyte 
-                 | byte_symbol 
-                 | int16 
-                 | int32 
-                 | int64 
-                 | binary 
+primitiveLiteral : null_symbol
+                 | decimal
+                 | single
+                 | double_symbol
+                 | sbyte
+                 | byte_symbol
+                 | int16
+                 | int32
+                 | int64
+                 | binary
                  | date
-                 | dateTimeOffset 
+                 | dateTimeOffset
                  | duration
-                 | guid 
-                 | aString 
-                 | timeOfDay 
-                 | boolean_symbol 
+                 | guid
+                 | aString
+                 | timeOfDay
+                 | boolean_symbol
                  | enum_symbol
-                 | geographyCollection 
-                 | geographyLineString 
-                 | geographyMultiLineString 
-                 | geographyMultiPoint 
-                 | geographyMultiPolygon 
-                 | geographyPoint 
-                 | geographyPolygon 
-                 | geometryCollection 
-                 | geometryLineString 
-                 | geometryMultiLineString 
-                 | geometryMultiPoint 
-                 | geometryMultiPolygon 
-                 | geometryPoint 
+                 | geographyCollection
+                 | geographyLineString
+                 | geographyMultiLineString
+                 | geographyMultiPoint
+                 | geographyMultiPolygon
+                 | geographyPoint
+                 | geographyPolygon
+                 | geometryCollection
+                 | geometryLineString
+                 | geometryMultiLineString
+                 | geometryMultiPoint
+                 | geometryMultiPolygon
+                 | geometryPoint
                  | geometryPolygon;
 
 null_symbol : Null_LLC ( SQ qualifiedTypeName SQ )?;
-       // The optional qualifiedTypeName is used to specify what type this null value should be considered. 
-       // Knowing the type is useful for function overload resolution purposes 
-                                                
+       // The optional qualifiedTypeName is used to specify what type this null value should be considered.
+       // Knowing the type is useful for function overload resolution purposes
+
 binary  : (X_LUC|Binary_LAC) SQ (HEXDIG1 HEXDIG1)* SQ; // Note: 'X' is case sensitive, "binary" is not
 boolean_symbol : (True_LLC|ONE) | (False_LLC|ZERO);
 
@@ -759,25 +759,25 @@ singleBody  : decimalBody ( E (SIGN)? ( Digit )+ )? // TODO: restrict range
 nanInfinity : NotANumber_LXC | MINUS Infinity_LUC | Infinity_LUC;
 
 guid     : GUID_LAC SQ guidBody SQ;
-guidBody : HEXDIG8 MINUS HEXDIG4 MINUS HEXDIG4 MINUS HEXDIG4 MINUS HEXDIG12; 
+guidBody : HEXDIG8 MINUS HEXDIG4 MINUS HEXDIG4 MINUS HEXDIG4 MINUS HEXDIG12;
 
 byte_symbol  : ( DIGIT3 )+; // numbers in the range from 0 to 255
 sbyte : (SIGN)? ( DIGIT3 )+; // numbers in the range from -128 to 127
-int16 : (SIGN)? ( DIGIT5 )+; // numbers in the range from -32768 to 32767        
+int16 : (SIGN)? ( DIGIT5 )+; // numbers in the range from -32768 to 32767
 int32 : (SIGN)? ( DIGIT10 )+; // numbers in the range from -2147483648 to 2147483647
 int64 : int64Body (I64_POSTFIX)?;
 int64Body : (SIGN)? ( DIGIT19 )+; // numbers in the range from -9223372036854775808 to 9223372036854775807
 
 aString           : SQ ( pCharNoSingleQuote | SingleQuoteEscapedInString | Unencoded )* SQ;
-pCharNoSingleQuote  : Unreserved 
-                    | PctEncoded 
-                    | OtherDelims 
-                    | DOLLAR 
-                    | AMPERSAND 
-                    | SEMI 
-                    | EQ 
-                    | COLON 
-                    | AT_SIGN 
+pCharNoSingleQuote  : Unreserved
+                    | PctEncoded
+                    | OtherDelims
+                    | DOLLAR
+                    | AMPERSAND
+                    | SEMI
+                    | EQ
+                    | COLON
+                    | AT_SIGN
                     ; // also no percent-encoded single quote
 SingleQuoteEscapedInString : SQ SQ;  // two quotes represent one within string literal
 
@@ -795,10 +795,10 @@ durationBody : ( SIGN )? P_LUC ( ( Digit )+ D_LUC )? ( T_LUC ( ( Digit )+ H_LUC 
      // see the lexical representation for dayTimeDuration in http://www.w3.org/TR/xmlschema11-2#dayTimeDuration for more information
      // COMMENT_ANTLR: ISO 8601 also PDTHMS indicators as uppercase
 
-timeOfDay     : TimeOfDay_LAC SQ timeOfDayBody SQ; 
+timeOfDay     : TimeOfDay_LAC SQ timeOfDayBody SQ;
 
 timeOfDayBody : hour COLON minute ( COLON second ( DOT fractionalSeconds )?)?;
- 
+
 year  : ( Digit ) ( Digit ) ( Digit ) ( Digit );
 
 month : ZERO ONE_TO_NINE
@@ -808,11 +808,11 @@ day   : ZERO_TO_TWO ONE_TO_NINE
       | THREE ZERO_TO_ONE;
 
 hour   : ZERO_TO_ONE ( Digit )
-       | TWO ONE_TO_THREE; 
+       | TWO ONE_TO_THREE;
 
 minute : ZERO_TO_FIFTY_NINE;
 
-second : ZERO_TO_FIFTY_NINE;       
+second : ZERO_TO_FIFTY_NINE;
 fractionalSeconds : ( Digit )+;
 
 enum_symbol      : qualifiedEnumerationTypeName SQ enumBody SQ;
@@ -868,7 +868,7 @@ polygonData        : OP ringLiteral   ( COMMA ringLiteral )* CP;
 ringLiteral        : OP positionLiteral ( COMMA positionLiteral )* CP;
 
 // Within each ringLiteral, the first and last positionLiteral elements MUST be an exact syntactic match to each other.
-// Within the polygonData, the ringLiterals MUST specify their points in appropriate winding order. 
+// Within the polygonData, the ringLiterals MUST specify their points in appropriate winding order.
 // In order of traversal, points to the left side of the ring are interpreted as being in the polygon.
 
 geometryCollection      : geometryPrefix fullCollectionLiteral      SQ;

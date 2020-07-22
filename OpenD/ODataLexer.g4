@@ -2,13 +2,13 @@
  * This is the lexer grammar of OData (please see ODataParser.g4
  * for more details).
  * The used dialect/metalanguage is documented at http://antlr.org/
- * This will all change in the near future, so please do not build 
+ * This will all change in the near future, so please do not build
  * a house on it ;-)
- * The plan is to collect here the character base and signalling 
+ * The plan is to collect here the character base and signalling
  * tokens that somehow form the words of the OData vocabulary.
  * These notes will be replaced when the code will be released.
  *
- * Contact: Stefan Drees <stefan@drees.name> 
+ * Contact: Stefan Drees <stefan@drees.name>
  */
 lexer grammar ODataLexer;
 
@@ -47,7 +47,7 @@ StringLiteral
 
 fragment
 EscapeSequence
-    :   '\\' ('b'|'t'|'n'|'f'|'r'|'\"'|'\''|'\\')
+    :   '\\' ('b'|'t'|'n'|'f'|'r'|'"'|'\''|'\\')
     |   UnicodeEscape
     |   OctalEscape
     ;
@@ -63,18 +63,18 @@ fragment
 UnicodeEscape
     :   '\\' 'u' HexDigit HexDigit HexDigit HexDigit
     ;
-    
+
 
 WS  :  (' '|'\r'|'\t'|'\u000C'|'\n') -> skip
     ;
 
-SQ : ['];              
+SQ : ['];
 DQ : '\u0022';
 SP     : '\u0020';
 HTAB   : '\u0009';
 CR     : '\u000D';
 LF     : '\u000A';
-SEMI   : [;];              
+SEMI   : [;];
 COMMA  : [,];
 EQ     : [=];
 DOLLAR : '$';
@@ -120,7 +120,7 @@ S : [Ss] ;
 T : [Tt] ;
 U : [Uu] ;
 Y : [Yy] ;
-    
+
 ZERO : '0' ;
 ONE : '1' ;
 TWO: '2' ;
@@ -175,7 +175,7 @@ ODataSignal_SKIP : DOLLAR 'skip' ;
 ODataSignal_TOP  : DOLLAR 'top' ;
 ODataSignal_FORMAT : DOLLAR 'format' ;
 
-                          
+
 ODataSignal_INLINECOUNT : DOLLAR 'inlinecount' ;
 
 
@@ -222,7 +222,7 @@ Round_LLC : 'round' ;
 Floor_LLC : 'floor' ;
 Ceiling_LLC : 'ceiling' ;
 
-GetTotalOffsetMinutes_LLC : 'gettotaloffsetminutes' ; 
+GetTotalOffsetMinutes_LLC : 'gettotaloffsetminutes' ;
 
 GeoDotDistance_LLC : 'geo.distance' ;
 GeoLength_LLC : 'geo.length' ;
@@ -236,7 +236,7 @@ Now_LLC : 'now' ;
 And_LLC : 'and' ;
 Or_LLC  : 'or'  ;
 
-Eq_LLC : 'eq' ;     
+Eq_LLC : 'eq' ;
 Ne_LLC : 'ne' ;
 Lt_LLC : 'lt' ;
 Le_LLC : 'le' ;
@@ -269,7 +269,7 @@ T_LUC : 'T';
 X_LUC : 'X';
 Z_LUC : 'Z';
 
-B_LLC :  'b';                
+B_LLC :  'b';
 F_LLC :  'f';
 N_LLC :  'n';
 R_LLC :  'r';
@@ -282,14 +282,13 @@ Infinity_LUC : 'INF' ;
 Null_LLC : 'null' ;
 True_LLC : 'true' ;
 False_LLC : 'false' ;
-EmptyString : '' ; // danger will robinson ! FIXME
 
-// refactor below: 
+// refactor below:
 
 ONE_TO_TWO  : [1-2];
 ONE_TO_THREE  : ONE_TO_TWO | [3];
-ONE_TO_FOUR  : ONE_TO_THREE | [4]; 
-ONE_TO_NINE  : ONE_TO_FOUR | [5-9]; 
+ONE_TO_FOUR  : ONE_TO_THREE | [4];
+ONE_TO_NINE  : ONE_TO_FOUR | [5-9];
 ZERO_TO_ONE : [0-1];
 ZERO_TO_TWO : ZERO_TO_ONE | [2];
 ZERO_TO_THREE : ZERO_TO_TWO | [3];
@@ -314,10 +313,10 @@ HEXDIG8 : HEXDIG4 HEXDIG4 ;
 HEXDIG12 : HEXDIG8 HEXDIG4 ;
 
 // Below is my personal bug ;-)
-H16 : HEXDIG1 
+H16 : HEXDIG1
     | HEXDIG2
     | HEXDIG2 HEXDIG1
-    | HEXDIG4 
+    | HEXDIG4
     ; //1*4HEXDIG from ABNF
 H16Col        : H16 COLON ;
 
@@ -326,8 +325,8 @@ H16Col        : H16 COLON ;
 Unencoded            : DQ | ESCAPE | UnencodedNoSpecial;
 UnencodedNoSpecial : SP | COLON | OC | CC | OB | CB ;
 // COMMENT_ANTLR: Heavy hacks, since ABNF grammars' BWS/OWS may match the empty string
-XWS  : SP | HTAB ;    // "required" whitespace 
-VWS : CR | LF | XWS ; // "bad" vertical whitespace 
+XWS  : SP | HTAB ;    // "required" whitespace
+VWS : CR | LF | XWS ; // "bad" vertical whitespace
 // COMMENT_ANTLR4: ( XWS )* is OWS when considered bad (from context) identical as lexer rules so:
 // COMMENT_ANTLR4_CONT: ... OWS (otherwise not referenced has been renamed to BWS
 
